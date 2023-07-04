@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+ <html>
+   <head>
+      <title>Art Gallery Slideshow</title>   
+      <link rel="stylesheet" href="static/slideshow.css"/>   
+   </head>
+   <body>
+      <div class="header">
+         <h1 class="title">Art Gallery Slideshow</h1>
+         <div class="time">
+            <span id="datetimeSpan"></span> <span id="datetimeSpanEnd"></span>            
+         </div>
+      </div>
+      <div id>
+      <div id="resultsParagraph" class="objectCard"></div>
+
+      <div class="buttonContainer">
+         <button id="previousButton" class="button">Previous</button>
+         <button id="pauseButton" class="button">Pause</button>
+         <button id="nextButton" class="button">Next</button>         
+      </div>
+      
+      <script src=
+"https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js">
+      </script>
+
+      <script>
+         'use strict';   
+         
+         function getDateTime()
+         {
+            let dateTime = new Date();   
+            $('#datetimeSpan').html(dateTime.toLocaleString('en-US'));                                      
+         }               
+         
+         let last_response = null;
+         // Fills the resultsTable HTML based on the response.
+         function handleResponse(response)
+         {         
+            last_response = $('#resultsParagraph').html();
+            $('#resultsParagraph').html(response) // response html fills between the table tags                                         
+         }
+
+         // Request function: USES AJAX TO redirect to a specific searchresults branch
+         // based on the value in the city input field.
+         let request = null;
+         function getResults()
+         {           
+            // Construct URL
+            let url = '/searchresults'
+            
+            // Abort request if necessary
+            if (request != null)
+               request.abort();
+            
+            // Uses the URL to direct to searchresults route in midterm.py
+            // If searchresults returns a response, we will handle it by updating the resultsTable HTML.
+            request = $.ajax(
+               {
+                  type: 'GET',
+                  url: url,
+                  success: handleResponse
+               }
+            );
+         }
+
+         function handleNoImage(image) {
+            image.src = "/static/image_not_available.png"
+         }
+
+         function setup()
+         {
+            getDateTime();
+            let timeInterval = window.setInterval(getDateTime, 1000);
+            
+            getResults();                        
+            let resultsInterval = window.setInterval(getResults, 5000);
+            $('#nextButton').on('click', function() {
+               getResults();
+               window.clearInterval(resultsInterval);
+               resultsInterval = window.setInterval(getResults, 5000);
+            }); 
+            
+            let paused = false;
+            $('#pauseButton').on('click', function() {
+               if (paused == false) {
+                  paused = true;
+                  window.clearInterval(resultsInterval)  ;             
+                  $('#pauseButton').html("Resume");
+               }
+               else {
+                  paused = false;
+                  getResults();
+                  resultsInterval = window.setInterval(getResults, 5000);
+                  $('#pauseButton').html("Pause");
+               }
+            }); 
+
+            $('#previousButton').on('click', function() {
+               handleResponse(last_response);
+               paused = true;
+               window.clearInterval(resultsInterval);
+               $('#pauseButton').html("Resume");
+            });
+
+          
+         }
+
+         $(document).ready(setup);
+
+      </script>
+   </body>
+ </html>
